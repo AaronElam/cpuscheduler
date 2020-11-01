@@ -28,6 +28,7 @@ public class Scheduler {
     // total # processes in readyQueue throughout simulation
     int totalReadyQueueProcesses = 0;
 
+
     // list of all processes in sim - used for calculating turnaround time
     Vector<Process> processes = new Vector<>();
 

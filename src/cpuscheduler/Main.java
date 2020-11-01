@@ -2,6 +2,8 @@ package cpuscheduler;
 
 public class Main {
 
+    private static FCFS fcfs;
+
     public static void main(String[] args) {
         int numProcesses = 12000;
         float queryInterval = (float) 0.1;
@@ -22,13 +24,34 @@ public class Main {
         if (arrivalRate <= 0 || serviceTime <= 0 || quantum <= 0) {
             System.err.println("ERROR: Arguments must be >= 0");
         }
-        new Scheduler();
-        Scheduler s = switch (scheduler) {
-            case 1 -> new FCFS(numProcesses, arrivalRate, serviceTime, queryInterval);
-            case 2 -> new SRTF(numProcesses, arrivalRate, serviceTime, queryInterval);
-            case 3 -> new HRRN(numProcesses, arrivalRate, serviceTime, queryInterval);
-            case 4 -> new RR(numProcesses, arrivalRate, serviceTime, queryInterval, quantum);
-            default -> new Scheduler();
-        };
+        Stats stats;
+
+        switch (scheduler) {
+            case 1 -> {
+                FCFS fcfs = new FCFS(numProcesses, arrivalRate, serviceTime, queryInterval);
+                stats = fcfs.RunSimulation();
+                stats.display();
+                stats.dump();
+            }
+            case 2 -> {
+                SRTF srtf = new SRTF(numProcesses, arrivalRate, serviceTime, queryInterval);
+                stats = srtf.RunSimulation();
+                stats.display();
+                stats.dump();
+            }
+            case 3 -> {
+                HRRN hrrn = new HRRN(numProcesses, arrivalRate, serviceTime, queryInterval);
+                stats = hrrn.RunSimulation();
+                stats.display();
+                stats.dump();
+            }
+            case 4 -> {
+                RR rr = new RR(numProcesses, arrivalRate, serviceTime, queryInterval, quantum);
+                stats = rr.RunSimulation();
+                stats.display();
+                stats.dump();
+            }
+            default -> System.err.println("Please provide a valid scheduler from 1-4.");
+        }
     }
 }

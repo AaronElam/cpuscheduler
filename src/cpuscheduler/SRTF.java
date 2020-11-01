@@ -1,19 +1,20 @@
 package cpuscheduler;
 
 import java.util.LinkedList;
+
 import static cpuscheduler.EventType.*;
 
 public class SRTF extends Scheduler {
 
     SRTF(int numProcesses, int arrivalRate,
-                  float serviceTime, float queryInterval) {
+         float serviceTime, float queryInterval) {
         this.numProcesses = numProcesses;
         this.arrivalRate = arrivalRate;
         this.serviceTime = serviceTime;
         this.queryInterval = queryInterval;
     }
 
-    public void RunSimulation() {
+    public Stats RunSimulation() {
         EventScheduler eventScheduler = new EventScheduler();
 
         Process firstProcess = new Process(0, clock, genexp(1 / serviceTime));
@@ -66,6 +67,8 @@ public class SRTF extends Scheduler {
 
                 // schedule this new process for arrival
                 eventScheduler.ScheduleEvent(nextProcess.GetArrivalTime(), nextProcess, ARRIVAL);
+
+                // departure
             } else if (event.GetType() == DEPARTURE) {
                 /// update statistics for process that just finished
                 event.GetProcess().SetCompletionTime(clock);
@@ -97,19 +100,22 @@ public class SRTF extends Scheduler {
                     onCpu = null;
                 }
             }
-            // calculate  turnaround time
-            float totalTurnaroundTime = 0;
-            for (Process process : processes) {
-                // include only completed processes
-                if (process.GetCompletionTime() != -1) {
-                    totalTurnaroundTime +=
-                            (process.GetCompletionTime() - process.GetArrivalTime());
-                }
-            }
-            float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
-            float throughput = processesSimulated / clock;
-            float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;
-            float avgReadyQueueSize = totalReadyQueueProcesses / (clock / queryInterval);
         }
+        // calculate  turnaround time
+        float totalTurnaroundTime = 0;
+        for (Process process : processes) {
+            // include only completed processes
+            if (process.GetCompletionTime() != -1) {
+                totalTurnaroundTime +=
+                        (process.GetCompletionTime() - process.GetArrivalTime());
+            }
+        }
+
+        float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
+        float throughput = processesSimulated / clock;
+        float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;
+        float avgReadyQueueSize = totalReadyQueueProcesses / (clock / queryInterval);
+
+        return new Stats(avgTurnaroundTime, throughput, avgCpuUtil, avgReadyQueueSize);
     }
 }

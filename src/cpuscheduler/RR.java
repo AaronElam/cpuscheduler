@@ -6,7 +6,7 @@ import static cpuscheduler.EventType.*;
 
 public class RR extends Scheduler {
     RR(int numProcesses, int arrivalRate,
-                float serviceTime, float queryInterval, float quantum) {
+       float serviceTime, float queryInterval, float quantum) {
         this.numProcesses = numProcesses;
         this.arrivalRate = arrivalRate;
         this.serviceTime = serviceTime;
@@ -14,7 +14,7 @@ public class RR extends Scheduler {
         this.quantum = quantum;
     }
 
-    public void RunSimulation() {
+    public Stats RunSimulation() {
         EventScheduler eventScheduler = new EventScheduler();
 
         Process firstProcess = new Process(0, clock, genexp(1 / serviceTime));
@@ -40,7 +40,7 @@ public class RR extends Scheduler {
 
                     // schedule a departure for this event
                     eventScheduler.ScheduleEvent(
-                            (float) (clock + event.GetProcess().GetRemainingServiceTime()),
+                            (clock + event.GetProcess().GetRemainingServiceTime()),
                             event.GetProcess(), DEPARTURE);
 
                 } else {
@@ -56,12 +56,12 @@ public class RR extends Scheduler {
                 eventScheduler.ScheduleEvent(nextProcess.GetArrivalTime(), nextProcess, ARRIVAL);
             }
             // Departure event
-            else if(event.GetType() == DEPARTURE) {
+            else if (event.GetType() == DEPARTURE) {
                 event.GetProcess().SetCompletionTime(clock);
                 event.GetProcess().SetRemainingServiceTime(0);
                 processesSimulated++;
 
-                if(!rdQueue.isEmpty()) {
+                if (!rdQueue.isEmpty()) {
                     Process processInQueue = rdQueue.getFirst();
                     rdQueue.pop();
 
@@ -71,8 +71,7 @@ public class RR extends Scheduler {
 
                     eventScheduler.ScheduleEvent(clock + processInQueue.GetServiceTime(),
                             processInQueue, DEPARTURE);
-                }
-                else {
+                } else {
                     lastCpuBusyTime = clock;
                     cpuIdle = true;
                     onCpu = null;
@@ -82,9 +81,8 @@ public class RR extends Scheduler {
                  */
                 //TODO: Remove event
                 eventScheduler.ScheduleEvent(clock + quantum, null, TIMEOUT);
-            }
-            else if(event.GetType() == TIMEOUT) {
-                if(!cpuIdle) {
+            } else if (event.GetType() == TIMEOUT) {
+                if (!cpuIdle) {
                     onCpu.SetRemainingServiceTime(
                             onCpu.GetLastTimeOnCpu() + onCpu.GetRemainingServiceTime() - clock);
                     //TODO: Remove event
@@ -101,19 +99,21 @@ public class RR extends Scheduler {
                             onCpu, DEPARTURE);
                 }
             }
-            // calculate  turnaround time
-            float totalTurnaroundTime = 0;
-            for (Process process : processes) {
-                // include only completed processes
-                if (process.GetCompletionTime() != -1) {
-                    totalTurnaroundTime +=
-                            (process.GetCompletionTime() - process.GetArrivalTime());
-                }
-            }
-            float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
-            float throughput = processesSimulated / clock;
-            float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;
-            float avgReadyQueueSize = totalReadyQueueProcesses / (clock / queryInterval);
         }
+        // calculate  turnaround time
+        float totalTurnaroundTime = 0;
+        for (Process process : processes) {
+            // include only completed processes
+            if (process.GetCompletionTime() != -1) {
+                totalTurnaroundTime +=
+                        (process.GetCompletionTime() - process.GetArrivalTime());
+            }
+        }
+        float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
+        float throughput = processesSimulated / clock;
+        float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;
+        float avgReadyQueueSize = totalReadyQueueProcesses / (clock / queryInterval);
+
+        return new Stats(avgTurnaroundTime, throughput, avgCpuUtil, avgReadyQueueSize);
     }
 }

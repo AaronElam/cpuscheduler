@@ -1,7 +1,5 @@
 package cpuscheduler;
 
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 
 import static cpuscheduler.EventType.*;
@@ -9,14 +7,14 @@ import static cpuscheduler.EventType.*;
 public class HRRN extends Scheduler {
 
     HRRN(int numProcesses, int arrivalRate,
-                  float serviceTime, float queryInterval) {
+         float serviceTime, float queryInterval) {
         this.numProcesses = numProcesses;
         this.arrivalRate = arrivalRate;
         this.serviceTime = serviceTime;
         this.queryInterval = queryInterval;
     }
 
-    public void RunSimulation() {
+    public Stats RunSimulation() {
         EventScheduler eventScheduler = new EventScheduler();
 
         Process firstProcess = new Process(0, clock, genexp(1 / serviceTime));
@@ -59,14 +57,13 @@ public class HRRN extends Scheduler {
                 // schedule new process
                 eventScheduler.ScheduleEvent(nextProcess.GetArrivalTime(), nextProcess, ARRIVAL);
 
-            }
-            else if(event.GetType() == DEPARTURE) {
+            } else if (event.GetType() == DEPARTURE) {
                 // update statistics for process that just finished
                 event.GetProcess().SetCompletionTime(clock);
                 event.GetProcess().SetRemainingServiceTime(0);
                 processesSimulated++;
 
-                if(!rdQueue.isEmpty()) {
+                if (!rdQueue.isEmpty()) {
                     //TODO: Sort by wait time
 
                     Process processInQueue = rdQueue.peekFirst();
@@ -80,27 +77,28 @@ public class HRRN extends Scheduler {
                     // schedule this process's departure
                     eventScheduler.ScheduleEvent(clock + processInQueue.GetServiceTime(),
                             processInQueue, DEPARTURE);
-                }
-                else {
+                } else {
                     lastCpuBusyTime = clock;
                     cpuIdle = true;
                     onCpu = null;
                 }
             }
-            // calculate  turnaround time
-            float totalTurnaroundTime = 0;
-            for (Process process : processes) {
-                // include only completed processes
-                if (process.GetCompletionTime() != -1) {
-                    totalTurnaroundTime +=
-                            (process.GetCompletionTime() - process.GetArrivalTime());
-                }
-            }
-            float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
-            float throughput = processesSimulated / clock;
-            float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;
-            float avgReadyQueueSize = totalReadyQueueProcesses / (clock / queryInterval);
         }
+        // calculate  turnaround time
+        float totalTurnaroundTime = 0;
+        for (Process process : processes) {
+            // include only completed processes
+            if (process.GetCompletionTime() != -1) {
+                totalTurnaroundTime +=
+                        (process.GetCompletionTime() - process.GetArrivalTime());
+            }
+        }
+        float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
+        float throughput = processesSimulated / clock;
+        float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;
+        float avgReadyQueueSize = totalReadyQueueProcesses / (clock / queryInterval);
+
+        return new Stats(avgTurnaroundTime, throughput, avgCpuUtil, avgReadyQueueSize);
     }
 
 }

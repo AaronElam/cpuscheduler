@@ -13,7 +13,7 @@ public class FCFS extends Scheduler {
         this.queryInterval = queryInterval;
     }
 
-    public void RunSimulation() {
+    public Stats RunSimulation() {
         EventScheduler eventScheduler = new EventScheduler();
 
         Process firstProcess = new Process(0, clock, genexp(1 / serviceTime));
@@ -40,7 +40,7 @@ public class FCFS extends Scheduler {
 
                     // schedule a departure for this event
                     eventScheduler.ScheduleEvent(
-                            (float) (clock + event.GetProcess().GetRemainingServiceTime()),
+                            (clock + event.GetProcess().GetRemainingServiceTime()),
                             event.GetProcess(), DEPARTURE);
 
                 }
@@ -115,8 +115,7 @@ public class FCFS extends Scheduler {
         float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;
         float avgReadyQueueSize = totalReadyQueueProcesses / (clock / queryInterval);
 
-//        Stats newStats{avgTurnaroundTime, throughput, avgCpuUtil, avgReadyQueueSize};
-//        return newStats;
+        return new Stats(avgTurnaroundTime, throughput, avgCpuUtil, avgReadyQueueSize);
     }
 }
 
