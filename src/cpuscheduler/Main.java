@@ -3,7 +3,7 @@ package cpuscheduler;
 public class Main {
 
     public static void main(String[] args) {
-        int numProcesses = 12000;
+        int numProcesses = 10000;
         float queryInterval = (float) 0.1;
         // Check if correct number of arguments are provided.
         if (args.length != 4) {
@@ -15,36 +15,36 @@ public class Main {
         // Parse args
         int scheduler = Integer.parseInt(args[0]);
         int arrivalRate = Integer.parseInt(args[1]);
-        float serviceTime = Float.parseFloat(args[2]);
+        float burst = Float.parseFloat(args[2]);
         float quantum = Float.parseFloat(args[3]);
 
         // Checking args
-        if (arrivalRate <= 0 || serviceTime <= 0 || quantum <= 0) {
+        if (arrivalRate <= 0 || burst <= 0 || quantum <= 0) {
             System.err.println("ERROR: Arguments must be >= 0");
         }
         Stats stats;
 
         switch (scheduler) {
             case 1 -> {
-                FCFS fcfs = new FCFS(numProcesses, arrivalRate, serviceTime, queryInterval);
+                FCFS fcfs = new FCFS(numProcesses, arrivalRate, burst, queryInterval);
                 stats = fcfs.RunSimulation();
                 stats.display();
                 stats.dump();
             }
             case 2 -> {
-                SRTF srtf = new SRTF(numProcesses, arrivalRate, serviceTime, queryInterval);
+                SRTF srtf = new SRTF(numProcesses, arrivalRate, burst, queryInterval);
                 stats = srtf.RunSimulation();
                 stats.display();
                 stats.dump();
             }
             case 3 -> {
-                HRRN hrrn = new HRRN(numProcesses, arrivalRate, serviceTime, queryInterval);
+                HRRN hrrn = new HRRN(numProcesses, arrivalRate, burst, queryInterval);
                 stats = hrrn.RunSimulation();
                 stats.display();
                 stats.dump();
             }
             case 4 -> {
-                RR rr = new RR(numProcesses, arrivalRate, serviceTime, queryInterval, quantum);
+                RR rr = new RR(numProcesses, arrivalRate, burst, queryInterval, quantum);
                 stats = rr.RunSimulation();
                 stats.display();
                 stats.dump();

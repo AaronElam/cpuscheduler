@@ -1,6 +1,8 @@
 package cpuscheduler;
 
-public class Process {
+import java.util.Comparator;
+
+public class Process implements Comparator<Process> {
     private final int id;
     private final float arrivalTime;
     private final float burst;
@@ -61,5 +63,10 @@ public class Process {
     // HRRN only
     float getResponseRatio() {
         return (waitTime + burst) / burst;
+    }
+
+    @Override
+    public int compare(Process o1, Process o2) {
+        return Float.compare(o1.getArrivalTime(), o2.getArrivalTime());
     }
 };

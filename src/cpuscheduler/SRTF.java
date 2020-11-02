@@ -19,8 +19,8 @@ public class SRTF extends Scheduler {
         Process firstProcess = new Process(0, clock, genexp(1 / serviceTime));
         processes.add(firstProcess);
 
-        eventScheduler.ScheduleEvent(clock, firstProcess, ARRIVAL);
-        eventScheduler.ScheduleEvent(clock + queryInterval, null, QUERY);
+        eventScheduler.scheduleEvent(clock, firstProcess, ARRIVAL);
+        eventScheduler.scheduleEvent(clock + queryInterval, null, QUERY);
 
         // main loop
         while (processesSimulated < numProcesses && !eventScheduler.empty()) {
@@ -28,84 +28,95 @@ public class SRTF extends Scheduler {
             LinkedList<Process> rdQueue = new LinkedList<>();
             clock = event.getTime();
 
+            /*
+             *
+             * Arrival event
+             *
+             */
             if (event.getType() == ARRIVAL) {
-                // cpu is idle
+                // nothing on cpu
                 if (cpuIdle) {
                     cpuIdle = false;
                     cpuIdleTime += clock - lastTimeCpuBusy;
                     event.getProcess().setLastTimeOnCpu(clock);
-                    // assign current process to the cpu
+                    // assign to cpu
                     onCpu = event.getProcess();
 
                     // schedule a departure for this event
-                    eventScheduler.ScheduleEvent((clock + event.getProcess().getRemainingBurst()), event.getProcess(),
+                    eventScheduler.scheduleEvent((clock + event.getProcess().getRemainingBurst()), event.getProcess(),
                             DEPARTURE);
-                } else {
+                }
+                // cpu not idle
+                if (!cpuIdle) {
                     onCpu.setRemainingBurst((onCpu.getLastTimeOnCpu() + onCpu.getRemainingBurst()) - clock);
                     rdQueue.add(event.getProcess());
 
                     if (!rdQueue.isEmpty() && rdQueue.peek().getRemainingBurst() < onCpu.getRemainingBurst()) {
                         // swap to process that has greater priority
-                        // eventScheduler.Remove
+                        // TODO: eventScheduler.Remove
                         Process processInQueue = rdQueue.getFirst();
                         rdQueue.add(onCpu);
 
                         onCpu = processInQueue;
                         onCpu.setLastTimeOnCpu(clock);
 
-                        eventScheduler.ScheduleEvent((float) (clock + processInQueue.getRemainingBurst()),
+                        eventScheduler.scheduleEvent((clock + processInQueue.getRemainingBurst()),
                                 processInQueue, DEPARTURE);
                     }
                 }
-                // make new process
                 Process nextProcess = new Process(event.getProcess().getId() + 1, clock + genexp(arrivalRate),
-                        genexp((float) (1 / serviceTime)));
+                        genexp((1 / serviceTime)));
                 processes.add(nextProcess);
 
-                // schedule this new process for arrival
-                eventScheduler.ScheduleEvent(nextProcess.getArrivalTime(), nextProcess, ARRIVAL);
+                // schedule this process for arrival
+                eventScheduler.scheduleEvent(nextProcess.getArrivalTime(), nextProcess, ARRIVAL);
 
-                // departure
-            } else if (event.getType() == DEPARTURE) {
-                /// update statistics for process that just finished
+                /*
+                 *
+                 * Departure event
+                 *
+                 */
+            } if (event.getType() == DEPARTURE) {
+                // stat updates
                 event.getProcess().setCompletionTime(clock);
                 event.getProcess().setRemainingBurst(0);
                 processesSimulated++;
 
-                // if there is another process waiting in the ready queue,
-                // assign it to the cpu
+                // place a waiting process in the ready queue then assign to cpu
                 if (!rdQueue.isEmpty()) {
-                    // Set current process on cpu to front of ready Queue
                     Process processInQueue = rdQueue.peekFirst();
                     onCpu = processInQueue;
 
-                    // update the last time this process was assigned (now)
+                    // update times
                     onCpu.setLastTimeOnCpu(clock);
-                    // update the process wait time
                     onCpu.setWaitTime(clock - processInQueue.getArrivalTime());
 
-                    // schedule this process's departure
-                    eventScheduler.ScheduleEvent(clock + processInQueue.getRemainingBurst(), processInQueue, DEPARTURE);
+                    // schedule this process for departure
+                    eventScheduler.scheduleEvent(clock + processInQueue.getRemainingBurst(), processInQueue, DEPARTURE);
 
                 }
-                // the rdQueue is - there are no processes currently to process
+                // ready queue is empty
                 else {
-                    // update the last time the cpu was busy
                     lastTimeCpuBusy = clock;
                     cpuIdle = true;
                     onCpu = null;
                 }
             }
         }
-        // calculate turnaround time
+
+        /*
+         * Query event update rq stats
+         */
         float totalTurnaroundTime = 0;
         for (Process process : processes) {
-            // include only completed processes
             if (process.getCompletionTime() != -1) {
                 totalTurnaroundTime += (process.getCompletionTime() - process.getArrivalTime());
             }
         }
 
+        /*
+         * Turnaround time stats
+         */
         float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
         float throughput = processesSimulated / clock;
         float avgCpuUtil = (1 - (cpuIdleTime / clock)) * 100;

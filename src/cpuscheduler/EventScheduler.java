@@ -12,9 +12,8 @@ public class EventScheduler {
      * @param p    A pointer to the process the event refereneces
      * @param type The type of event
      */
-    public void ScheduleEvent(float time, Process p, EventType type) {
+    public void scheduleEvent(float time, Process p, EventType type) {
         Event newEvent = new Event(type, time, p);
-        // insert even in sorted order based on earliest time scheduled to last
         eventSet.add(newEvent);
     }
 
