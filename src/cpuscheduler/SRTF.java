@@ -6,8 +6,7 @@ import static cpuscheduler.EventType.*;
 
 public class SRTF extends Scheduler {
 
-    SRTF(int numProcesses, int arrivalRate,
-         float serviceTime, float queryInterval) {
+    SRTF(int numProcesses, int arrivalRate, float serviceTime, float queryInterval) {
         this.numProcesses = numProcesses;
         this.arrivalRate = arrivalRate;
         this.serviceTime = serviceTime;
@@ -24,55 +23,53 @@ public class SRTF extends Scheduler {
         eventScheduler.ScheduleEvent(clock + queryInterval, null, QUERY);
 
         // main loop
-        while (processesSimulated < numProcesses && !eventScheduler.Empty()) {
-            Event event = eventScheduler.GetEvent();
+        while (processesSimulated < numProcesses && !eventScheduler.empty()) {
+            Event event = eventScheduler.getEvent();
             LinkedList<Process> rdQueue = new LinkedList<>();
-            clock = event.GetTime();
+            clock = event.getTime();
 
-            if (event.GetType() == ARRIVAL) {
+            if (event.getType() == ARRIVAL) {
                 // cpu is idle
                 if (cpuIdle) {
                     cpuIdle = false;
-                    cpuIdleTime += clock - lastCpuBusyTime;
-                    event.GetProcess().SetLastTimeAssigned(clock);
+                    cpuIdleTime += clock - lastTimeCpuBusy;
+                    event.getProcess().setLastTimeOnCpu(clock);
                     // assign current process to the cpu
-                    onCpu = event.GetProcess();
+                    onCpu = event.getProcess();
 
                     // schedule a departure for this event
-                    eventScheduler.ScheduleEvent(
-                            (float) (clock + event.GetProcess().GetRemainingServiceTime()),
-                            event.GetProcess(), DEPARTURE);
+                    eventScheduler.ScheduleEvent((clock + event.getProcess().getRemainingBurst()), event.getProcess(),
+                            DEPARTURE);
                 } else {
-                    onCpu.SetRemainingServiceTime((onCpu.GetLastTimeOnCpu() + onCpu.GetRemainingServiceTime()) - clock);
-                    rdQueue.add(event.GetProcess());
+                    onCpu.setRemainingBurst((onCpu.getLastTimeOnCpu() + onCpu.getRemainingBurst()) - clock);
+                    rdQueue.add(event.getProcess());
 
-                    if (!rdQueue.isEmpty() && rdQueue.peek().GetRemainingServiceTime() < onCpu.GetRemainingServiceTime()) {
+                    if (!rdQueue.isEmpty() && rdQueue.peek().getRemainingBurst() < onCpu.getRemainingBurst()) {
                         // swap to process that has greater priority
-                        //eventScheduler.Remove
+                        // eventScheduler.Remove
                         Process processInQueue = rdQueue.getFirst();
                         rdQueue.add(onCpu);
 
                         onCpu = processInQueue;
-                        onCpu.SetLastTimeAssigned(clock);
+                        onCpu.setLastTimeOnCpu(clock);
 
-                        eventScheduler.ScheduleEvent((float) (clock + processInQueue.GetRemainingServiceTime()),
+                        eventScheduler.ScheduleEvent((float) (clock + processInQueue.getRemainingBurst()),
                                 processInQueue, DEPARTURE);
                     }
                 }
                 // make new process
-                Process nextProcess =
-                        new Process(event.GetProcess().GetId() + 1,
-                                clock + genexp(arrivalRate), genexp((float) (1 / serviceTime)));
+                Process nextProcess = new Process(event.getProcess().getId() + 1, clock + genexp(arrivalRate),
+                        genexp((float) (1 / serviceTime)));
                 processes.add(nextProcess);
 
                 // schedule this new process for arrival
-                eventScheduler.ScheduleEvent(nextProcess.GetArrivalTime(), nextProcess, ARRIVAL);
+                eventScheduler.ScheduleEvent(nextProcess.getArrivalTime(), nextProcess, ARRIVAL);
 
                 // departure
-            } else if (event.GetType() == DEPARTURE) {
+            } else if (event.getType() == DEPARTURE) {
                 /// update statistics for process that just finished
-                event.GetProcess().SetCompletionTime(clock);
-                event.GetProcess().SetRemainingServiceTime(0);
+                event.getProcess().setCompletionTime(clock);
+                event.getProcess().setRemainingBurst(0);
                 processesSimulated++;
 
                 // if there is another process waiting in the ready queue,
@@ -83,31 +80,29 @@ public class SRTF extends Scheduler {
                     onCpu = processInQueue;
 
                     // update the last time this process was assigned (now)
-                    onCpu.SetLastTimeAssigned(clock);
+                    onCpu.setLastTimeOnCpu(clock);
                     // update the process wait time
-                    onCpu.SetWaitTime(clock - processInQueue.GetArrivalTime());
+                    onCpu.setWaitTime(clock - processInQueue.getArrivalTime());
 
                     // schedule this process's departure
-                    eventScheduler.ScheduleEvent(clock + processInQueue.GetRemainingServiceTime(),
-                            processInQueue, DEPARTURE);
+                    eventScheduler.ScheduleEvent(clock + processInQueue.getRemainingBurst(), processInQueue, DEPARTURE);
 
                 }
-                // the rdQueue is  - there are no processes currently to process
+                // the rdQueue is - there are no processes currently to process
                 else {
                     // update the last time the cpu was busy
-                    lastCpuBusyTime = clock;
+                    lastTimeCpuBusy = clock;
                     cpuIdle = true;
                     onCpu = null;
                 }
             }
         }
-        // calculate  turnaround time
+        // calculate turnaround time
         float totalTurnaroundTime = 0;
         for (Process process : processes) {
             // include only completed processes
-            if (process.GetCompletionTime() != -1) {
-                totalTurnaroundTime +=
-                        (process.GetCompletionTime() - process.GetArrivalTime());
+            if (process.getCompletionTime() != -1) {
+                totalTurnaroundTime += (process.getCompletionTime() - process.getArrivalTime());
             }
         }
 

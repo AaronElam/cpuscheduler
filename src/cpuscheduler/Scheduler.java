@@ -11,33 +11,21 @@ public class Scheduler {
     protected float queryInterval;
     protected float quantum;
 
-    // total # processes completed
     int processesSimulated = 0;
-    // running clock
+
+    // overall clock
     float clock = 0;
 
-    // bool to keep track of cpu idle state
     boolean cpuIdle = true;
-    // total time that cpu has been idle during the sim
     float cpuIdleTime = 0;
-    // last busy cpu time
-    float lastCpuBusyTime = 0;
-    // Pointer to process currently on the cpu
+    float lastTimeCpuBusy = 0;
     Process onCpu = null;
 
-    // total # processes in readyQueue throughout simulation
-    int totalReadyQueueProcesses = 0;
+    public int totalReadyQueueProcesses = 0;
 
-
-    // list of all processes in sim - used for calculating turnaround time
+    // vector of all processes
     Vector<Process> processes = new Vector<>();
 
-    //    // parent constructor (if defined) is called first
-//    public void RunSimulation() = 0;
-    ////////////////////////////////////////////////////////////////
-    // Functions below used for calculating exp. distribution and provided by
-    // professor Mina
-    // returns a random number between 0 and 1
     public static float genexp(float lambda) {
         Random rand = new Random();
         float u, x;

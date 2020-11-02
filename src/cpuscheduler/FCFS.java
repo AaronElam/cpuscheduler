@@ -1,12 +1,12 @@
 package cpuscheduler;
 
 import java.util.LinkedList;
+
 import static cpuscheduler.EventType.*;
 
 public class FCFS extends Scheduler {
 
-    FCFS(int numProcesses, int arrivalRate,
-                  float serviceTime, float queryInterval) {
+    FCFS(int numProcesses, int arrivalRate, float serviceTime, float queryInterval) {
         this.numProcesses = numProcesses;
         this.arrivalRate = arrivalRate;
         this.serviceTime = serviceTime;
@@ -23,91 +23,87 @@ public class FCFS extends Scheduler {
         eventScheduler.ScheduleEvent(clock + queryInterval, null, QUERY);
 
         // main loop
-        while (processesSimulated < numProcesses && !eventScheduler.Empty()) {
-            Event event = eventScheduler.GetEvent();
+        while (processesSimulated < numProcesses && !eventScheduler.empty()) {
+            Event event = eventScheduler.getEvent();
             LinkedList<Process> rdQueue = new LinkedList<>();
-            clock = event.GetTime();
+            clock = event.getTime();
 
-            if (event.GetType() == ARRIVAL) {
-                // cpu is idle - no process is currently assigned
+            /*
+             *
+             * Arrival event
+             *
+             */
+            if (event.getType() == ARRIVAL) {
+                // nothing on cpu
                 if (cpuIdle) {
-                    // cpu idle
                     cpuIdle = false;
-                    cpuIdleTime += clock - lastCpuBusyTime;
-                    event.GetProcess().SetLastTimeAssigned(clock);
-                    // assign current process to the cpu
-                    onCpu = event.GetProcess();
+                    cpuIdleTime += clock - lastTimeCpuBusy;
+                    event.getProcess().setLastTimeOnCpu(clock);
+                    // assign to cpu
+                    onCpu = event.getProcess();
 
                     // schedule a departure for this event
-                    eventScheduler.ScheduleEvent(
-                            (clock + event.GetProcess().GetRemainingServiceTime()),
-                            event.GetProcess(), DEPARTURE);
-
+                    eventScheduler.ScheduleEvent((clock + event.getProcess().getRemainingBurst()), event.getProcess(),
+                            DEPARTURE);
                 }
-                // cpu is not idle - add this event's process to the ready queue
+                // cpu not idle
                 else {
-                    rdQueue.add(event.GetProcess());
+                    rdQueue.add(event.getProcess());
                 }
-                Process nextProcess =
-                        new Process(event.GetProcess().GetId() + 1,
-                                clock + genexp(arrivalRate), genexp(1 / serviceTime));
+                Process nextProcess = new Process(event.getProcess().getId() + 1, clock + genexp(arrivalRate),
+                        genexp(1 / serviceTime));
                 processes.add(nextProcess);
 
-                // schedule this new process for arrival
-                eventScheduler.ScheduleEvent(nextProcess.GetArrivalTime(), nextProcess, ARRIVAL);
+                // sent this process off to arrive
+                eventScheduler.ScheduleEvent(nextProcess.getArrivalTime(), nextProcess, ARRIVAL);
 
-                /*Departure Event
+                /*
                  *
-                 * This process is scheduled for departure from the system.
-                 * It has completed its required service time
+                 * Departure event
+                 *
                  */
-            } else if (event.GetType() == DEPARTURE) {
-                /// update statistics for process that just finished
-                event.GetProcess().SetCompletionTime(clock);
-                event.GetProcess().SetRemainingServiceTime(0);
+            } else if (event.getType() == DEPARTURE) {
+                // stat updates
+                event.getProcess().setCompletionTime(clock);
+                event.getProcess().setRemainingBurst(0);
                 processesSimulated++;
 
-                // if there is another process waiting in the ready queue,
-                // assign it to the cpu
+                // place a waiting process in the ready queue then assign to cpu
                 if (!rdQueue.isEmpty()) {
-                    // Set current process on cpu to front of ready Queue
+
                     Process processInQueue = rdQueue.peekFirst();
                     onCpu = processInQueue;
 
-                    // update the last time this process was assigned (now)
-                    onCpu.SetLastTimeAssigned(clock);
-                    // update the process wait time
-                    onCpu.SetWaitTime(clock - processInQueue.GetArrivalTime());
+                    onCpu.setLastTimeOnCpu(clock);
+                    onCpu.setWaitTime(clock - processInQueue.getArrivalTime());
 
-                    // schedule this process's departure
-                    eventScheduler.ScheduleEvent(clock + processInQueue.GetServiceTime(),
-                            processInQueue, DEPARTURE);
+                    eventScheduler.ScheduleEvent(clock + processInQueue.getBurst(), processInQueue, DEPARTURE);
 
                 }
-                // the rdQueue is  - there are no processes currently to process
+                // ready queue is empty
                 else {
-                    // update the last time the cpu was busy
-                    lastCpuBusyTime = clock;
+                    lastTimeCpuBusy = clock;
                     cpuIdle = true;
                     onCpu = null;
                 }
             }
-            // Query Event - Here we query for statistics on the state of
-            // the readyQueue
-            else if (event.GetType() == QUERY) {
-                // update the total number of processes in the readyQueue every
-                // query interval
+
+            /*
+             * Query event update rq stats
+             */
+            else if (event.getType() == QUERY) {
                 totalReadyQueueProcesses += rdQueue.size();
                 eventScheduler.ScheduleEvent(clock + queryInterval, null, QUERY);
             }
         }
-        // calculate  turnaround time
+
+        /*
+         * Turnaround time stats
+         */
         float totalTurnaroundTime = 0;
         for (Process process : processes) {
-            // include only completed processes
-            if (process.GetCompletionTime() != -1) {
-                totalTurnaroundTime +=
-                        (process.GetCompletionTime() - process.GetArrivalTime());
+            if (process.getCompletionTime() != -1) {
+                totalTurnaroundTime += (process.getCompletionTime() - process.getArrivalTime());
             }
         }
         float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
@@ -118,4 +114,3 @@ public class FCFS extends Scheduler {
         return new Stats(avgTurnaroundTime, throughput, avgCpuUtil, avgReadyQueueSize);
     }
 }
-

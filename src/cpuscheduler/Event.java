@@ -1,6 +1,8 @@
 package cpuscheduler;
 
-enum EventType { ARRIVAL, DEPARTURE, TIMEOUT, QUERY };
+enum EventType {
+    ARRIVAL, DEPARTURE, TIMEOUT, QUERY
+};
 
 public class Event {
 
@@ -14,15 +16,17 @@ public class Event {
         this.type = type;
     }
 
-    float GetTime() {
+    float getTime() {
         return time;
     }
-    EventType GetType() {
+
+    EventType getType() {
         return type;
     }
-    Process GetProcess() {
+
+    Process getProcess() {
         return process;
     }
-//    // the default operator the set<EventScheduler> uses for comparison
-//    bool operator<(const Event& other) const;
+    // // the default operator the set<EventScheduler> uses for comparison
+    // bool operator<(const Event& other) const;
 };

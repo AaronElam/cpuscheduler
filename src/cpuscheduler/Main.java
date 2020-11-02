@@ -2,8 +2,6 @@ package cpuscheduler;
 
 public class Main {
 
-    private static FCFS fcfs;
-
     public static void main(String[] args) {
         int numProcesses = 12000;
         float queryInterval = (float) 0.1;

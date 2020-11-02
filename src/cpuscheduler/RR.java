@@ -5,8 +5,7 @@ import java.util.LinkedList;
 import static cpuscheduler.EventType.*;
 
 public class RR extends Scheduler {
-    RR(int numProcesses, int arrivalRate,
-       float serviceTime, float queryInterval, float quantum) {
+    RR(int numProcesses, int arrivalRate, float serviceTime, float queryInterval, float quantum) {
         this.numProcesses = numProcesses;
         this.arrivalRate = arrivalRate;
         this.serviceTime = serviceTime;
@@ -24,41 +23,39 @@ public class RR extends Scheduler {
         eventScheduler.ScheduleEvent(clock + queryInterval, null, QUERY);
 
         // main loop
-        while (processesSimulated < numProcesses && !eventScheduler.Empty()) {
-            Event event = eventScheduler.GetEvent();
+        while (processesSimulated < numProcesses && !eventScheduler.empty()) {
+            Event event = eventScheduler.getEvent();
             LinkedList<Process> rdQueue = new LinkedList<>();
-            clock = event.GetTime();
+            clock = event.getTime();
 
-            if (event.GetType() == ARRIVAL) {
+            if (event.getType() == ARRIVAL) {
                 if (cpuIdle) {
                     // cpu idle
                     cpuIdle = false;
-                    cpuIdleTime += clock - lastCpuBusyTime;
-                    event.GetProcess().SetLastTimeAssigned(clock);
+                    cpuIdleTime += clock - lastTimeCpuBusy;
+                    event.getProcess().setLastTimeOnCpu(clock);
                     // assign current process to the cpu
-                    onCpu = event.GetProcess();
+                    onCpu = event.getProcess();
 
                     // schedule a departure for this event
-                    eventScheduler.ScheduleEvent(
-                            (clock + event.GetProcess().GetRemainingServiceTime()),
-                            event.GetProcess(), DEPARTURE);
+                    eventScheduler.ScheduleEvent((clock + event.getProcess().getRemainingBurst()), event.getProcess(),
+                            DEPARTURE);
 
                 } else {
-                    rdQueue.add(event.GetProcess());
+                    rdQueue.add(event.getProcess());
                 }
                 // create new process
-                Process nextProcess =
-                        new Process(event.GetProcess().GetId() + 1,
-                                clock + genexp(arrivalRate), genexp(1 / serviceTime));
+                Process nextProcess = new Process(event.getProcess().getId() + 1, clock + genexp(arrivalRate),
+                        genexp(1 / serviceTime));
                 processes.add(nextProcess);
 
                 // schedule this new process for arrival
-                eventScheduler.ScheduleEvent(nextProcess.GetArrivalTime(), nextProcess, ARRIVAL);
+                eventScheduler.ScheduleEvent(nextProcess.getArrivalTime(), nextProcess, ARRIVAL);
             }
             // Departure event
-            else if (event.GetType() == DEPARTURE) {
-                event.GetProcess().SetCompletionTime(clock);
-                event.GetProcess().SetRemainingServiceTime(0);
+            else if (event.getType() == DEPARTURE) {
+                event.getProcess().setCompletionTime(clock);
+                event.getProcess().setRemainingBurst(0);
                 processesSimulated++;
 
                 if (!rdQueue.isEmpty()) {
@@ -66,47 +63,43 @@ public class RR extends Scheduler {
                     rdQueue.pop();
 
                     onCpu = processInQueue;
-                    onCpu.SetLastTimeAssigned(clock);
-                    onCpu.SetWaitTime(clock - onCpu.GetArrivalTime());
+                    onCpu.setLastTimeOnCpu(clock);
+                    onCpu.setWaitTime(clock - onCpu.getArrivalTime());
 
-                    eventScheduler.ScheduleEvent(clock + processInQueue.GetServiceTime(),
-                            processInQueue, DEPARTURE);
+                    eventScheduler.ScheduleEvent(clock + processInQueue.getBurst(), processInQueue, DEPARTURE);
                 } else {
-                    lastCpuBusyTime = clock;
+                    lastTimeCpuBusy = clock;
                     cpuIdle = true;
                     onCpu = null;
                 }
                 /*
-                    QUANTUMS
+                 * QUANTUMS
                  */
-                //TODO: Remove event
+                // TODO: Remove event
                 eventScheduler.ScheduleEvent(clock + quantum, null, TIMEOUT);
-            } else if (event.GetType() == TIMEOUT) {
+            } else if (event.getType() == TIMEOUT) {
                 if (!cpuIdle) {
-                    onCpu.SetRemainingServiceTime(
-                            onCpu.GetLastTimeOnCpu() + onCpu.GetRemainingServiceTime() - clock);
-                    //TODO: Remove event
+                    onCpu.setRemainingBurst(onCpu.getLastTimeOnCpu() + onCpu.getRemainingBurst() - clock);
+                    // TODO: Remove event
                     rdQueue.push(onCpu);
 
                     onCpu = rdQueue.getFirst();
                     rdQueue.pop();
 
-                    //schedule new quantum
-                    onCpu.SetLastTimeAssigned(clock);
+                    // schedule new quantum
+                    onCpu.setLastTimeOnCpu(clock);
                     eventScheduler.ScheduleEvent(clock + quantum, null, TIMEOUT);
 
-                    eventScheduler.ScheduleEvent(clock + onCpu.GetRemainingServiceTime(),
-                            onCpu, DEPARTURE);
+                    eventScheduler.ScheduleEvent(clock + onCpu.getRemainingBurst(), onCpu, DEPARTURE);
                 }
             }
         }
-        // calculate  turnaround time
+        // calculate turnaround time
         float totalTurnaroundTime = 0;
         for (Process process : processes) {
             // include only completed processes
-            if (process.GetCompletionTime() != -1) {
-                totalTurnaroundTime +=
-                        (process.GetCompletionTime() - process.GetArrivalTime());
+            if (process.getCompletionTime() != -1) {
+                totalTurnaroundTime += (process.getCompletionTime() - process.getArrivalTime());
             }
         }
         float avgTurnaroundTime = totalTurnaroundTime / numProcesses;
