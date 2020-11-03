@@ -1,5 +1,7 @@
 package cpuscheduler;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -8,6 +10,7 @@ public class Stats {
     float totalThroughput;
     float avgCpuUtil;
     float avgReadyQueueSize;
+    File file = new File("./Data/sim.data");
 
     Stats(float avgTurnaroundTime, float totalThroughput, float avgCpuUtil, float avgReadyQueueSize) {
         this.avgTurnaroundTime = avgTurnaroundTime;
@@ -25,10 +28,12 @@ public class Stats {
 
     void dump() {
         try {
-            FileWriter w = new FileWriter("./Data/sim.data");
-            w.write(avgTurnaroundTime + "," + totalThroughput + "," + avgCpuUtil + "," + avgReadyQueueSize);
+            FileWriter w = new FileWriter(file, true);
+            BufferedWriter bw = new BufferedWriter(w);
+            bw.write(avgTurnaroundTime + "," + totalThroughput + "," + avgCpuUtil + "," + avgReadyQueueSize + "\n");
+            bw.close();
             w.close();
-            System.out.println("Successfully wrote to the file.");
+            System.out.println("\nSuccessfully wrote to the file.");
         } catch (IOException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();

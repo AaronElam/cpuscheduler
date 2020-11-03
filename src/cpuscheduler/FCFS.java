@@ -34,7 +34,7 @@ public class FCFS extends Scheduler {
         eventScheduler.scheduleEvent(clock + queryInterval, null, QUERY);
 
         // main loop
-        while (processesSimulated < numProcesses && !eventScheduler.empty()) {
+        while (processesSimulated < numProcesses && !eventScheduler.isEmpty()) {
             Event event = eventScheduler.getEvent();
             LinkedList<Process> rdQueue = new LinkedList<>();
             clock = event.getTime();
@@ -66,10 +66,15 @@ public class FCFS extends Scheduler {
         }
         // cpu not idle
         if(!cpuIdle){
-            //TODO: sort from lowest service time to highest. Low gets priority
+            // sorts according to FCFS rules
+            rdQueue.sort(new Comparator<>() {
+                @Override
+                public int compare(Process o1, Process o2) {
+                    return (int) (o1.getArrivalTime() - o2.getArrivalTime());
+                }
+            });
             rdQueue.add(event.getProcess());
             totalReadyQueueProcesses++;
-            rdQueue.sort(event.getProcess());
         }
         Process nextProcess = new Process(event.getProcess().getId() + 1, clock + genexp(arrivalRate),
                 genexp(1 / serviceTime));

@@ -27,6 +27,4 @@ public class Event {
     Process getProcess() {
         return process;
     }
-    // // the default operator the set<EventScheduler> uses for comparison
-    // bool operator<(const Event& other) const;
 };

@@ -2,7 +2,7 @@ package cpuscheduler;
 
 import java.util.Comparator;
 
-public class Process implements Comparator<Process> {
+public class Process {
     private final int id;
     private final float arrivalTime;
     private final float burst;
@@ -32,7 +32,9 @@ public class Process implements Comparator<Process> {
         return arrivalTime;
     }
 
-    float getBurst() { return burst; }
+    float getBurst() {
+        return burst;
+    }
 
     float getRemainingBurst() {
         return remainingBurst;
@@ -42,9 +44,7 @@ public class Process implements Comparator<Process> {
         return lastTimeOnCpu;
     }
 
-    float getCompletionTime() {
-        return completionTime;
-    }
+    float getCompletionTime() { return completionTime; }
 
     void setWaitTime(float waitTime) {
         this.waitTime = waitTime;
@@ -54,7 +54,9 @@ public class Process implements Comparator<Process> {
         this.remainingBurst = remainingBurst;
     }
 
-    void setLastTimeOnCpu(float lastTimeOnCpu) {this.lastTimeOnCpu = lastTimeOnCpu;}
+    void setLastTimeOnCpu(float lastTimeOnCpu) {
+        this.lastTimeOnCpu = lastTimeOnCpu;
+    }
 
     void setCompletionTime(float completionTime) {
         this.completionTime = completionTime;
@@ -64,9 +66,4 @@ public class Process implements Comparator<Process> {
     float getResponseRatio() {
         return (waitTime + burst) / burst;
     }
-
-    @Override
-    public int compare(Process o1, Process o2) {
-        return Float.compare(o1.getArrivalTime(), o2.getArrivalTime());
-    }
-};
+}

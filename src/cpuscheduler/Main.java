@@ -22,6 +22,7 @@ public class Main {
         if (arrivalRate <= 0 || burst <= 0 || quantum <= 0) {
             System.err.println("ERROR: Arguments must be >= 0");
         }
+
         Stats stats;
 
         switch (scheduler) {
