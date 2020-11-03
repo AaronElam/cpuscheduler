@@ -1,7 +1,6 @@
 package cpuscheduler;
 
 import java.util.LinkedList;
-import java.util.ListIterator;
 
 public class EventScheduler {
     private final LinkedList<Event> eventSet = new LinkedList<>();

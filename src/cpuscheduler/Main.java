@@ -26,31 +26,37 @@ public class Main {
         Stats stats;
 
         switch (scheduler) {
-            case 1 -> {
+            case 1: {
                 FCFS fcfs = new FCFS(numProcesses, arrivalRate, burst, queryInterval);
                 stats = fcfs.RunSimulation();
                 stats.display();
                 stats.dump();
+                break;
             }
-            case 2 -> {
+            case 2: {
                 SRTF srtf = new SRTF(numProcesses, arrivalRate, burst, queryInterval);
                 stats = srtf.RunSimulation();
                 stats.display();
                 stats.dump();
+                break;
             }
-            case 3 -> {
+            case 3: {
                 HRRN hrrn = new HRRN(numProcesses, arrivalRate, burst, queryInterval);
                 stats = hrrn.RunSimulation();
                 stats.display();
                 stats.dump();
+                break;
             }
-            case 4 -> {
+            case 4: {
                 RR rr = new RR(numProcesses, arrivalRate, burst, queryInterval, quantum);
                 stats = rr.RunSimulation();
                 stats.display();
                 stats.dump();
+                break;
             }
-            default -> System.err.println("Please provide a valid scheduler from 1-4.");
+            default:
+                System.err.println("Please provide a valid scheduler from 1-4.");
+                break;
         }
     }
 }

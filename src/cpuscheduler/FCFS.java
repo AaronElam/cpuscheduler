@@ -40,9 +40,15 @@ public class FCFS extends Scheduler {
             clock = event.getTime();
 
             switch(event.getType()) {
-                case ARRIVAL -> arrival(eventScheduler, event, rdQueue, clock);
-                case DEPARTURE -> departure(eventScheduler, event, rdQueue, clock);
-                case QUERY -> query(eventScheduler, event, rdQueue, clock);
+                case ARRIVAL:
+                    arrival(eventScheduler, event, rdQueue, clock);
+                    break;
+                case DEPARTURE:
+                    departure(eventScheduler, event, rdQueue, clock);
+                    break;
+                case QUERY:
+                    query(eventScheduler, event, rdQueue, clock);
+                    break;
             }
         }
         return fcfsStats();
